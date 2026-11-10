@@ -38,11 +38,11 @@
     });
 
     // Flags load asynchronously, so wait for them instead of checking immediately
-    posthog.onFeatureFlags(function () {
-      var v = posthog.getFeatureFlag('new-signup-button');
-      if (v) document.getElementById('complete').textContent = 'Create my free account';
-      setStatus('Flag new-signup-button = ' + v);
-    });
+   posthog.onFeatureFlags(function () {
+  var v = posthog.getFeatureFlag('signup-button-text-test');
+  if (v === 'test') document.getElementById('complete').textContent = 'Create my free account';
+  setStatus('Flag signup-button-text-test = ' + v);
+});
   </script>
 </body>
 </html>
