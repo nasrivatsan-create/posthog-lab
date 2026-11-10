@@ -32,7 +32,7 @@
     });
 
     document.getElementById('complete').addEventListener('click', function () {
-      posthog.identify('test-user-001', { plan: 'free' });   // fake ID, no real data
+    posthog.identify('test-user-' + Math.floor(Math.random() * 100000), { plan: 'free' });
       posthog.capture('signup_completed', { plan: 'free' });
       setStatus('signup_completed sent');
     });
