@@ -15,34 +15,67 @@
     })
 </script>
 </head>
+ 
 <body style="font-family:sans-serif;max-width:480px;margin:40px auto">
   <h1>PostHog Lab</h1>
-  <p>A tiny test page for practicing events, identify, funnels and feature flags.</p>
+  <p>A tiny test page of Sri (srivatsan) for practicing events, identify, funnels and feature flags.</p>
 
   <button id="start">Start signup</button>
   <button id="complete">Complete signup</button>
-  <p id="status">Waiting for flags…</p>
+  <button id="reset">New test visitor</button>
+  <p id="eventStatus">No events sent yet</p>
+  <p id="flagStatus">Waiting for flags…</p>
 
   <script>
-    function setStatus(msg) { document.getElementById('status').textContent = msg; }
+    var KEY = 'lab_test_user';
+    var FLAG = 'new-signup-button';
+
+    function getTestUser() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+    function setTestUser(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+    function clearTestUser() { try { localStorage.removeItem(KEY); } catch (e) {} }
+    function say(id, msg) { document.getElementById(id).textContent = msg; }
 
     document.getElementById('start').addEventListener('click', function () {
       posthog.capture('signup_started', { source: 'lab_page' });
-      setStatus('signup_started sent');
+      say('eventStatus', 'signup_started sent');
     });
 
     document.getElementById('complete').addEventListener('click', function () {
-    posthog.identify('test-user-' + Math.floor(Math.random() * 100000), { plan: 'free' });
+      var user = getTestUser();
+      if (!user) {
+        // Remember what the flag said while still anonymous, to compare after identify
+        window.__flagBefore = posthog.getFeatureFlag(FLAG);
+        user = 'test-user-' + Math.floor(Math.random() * 100000);  // fake ID, no real data
+        setTestUser(user);
+        posthog.identify(user, { plan: 'free' });
+      }
       posthog.capture('signup_completed', { plan: 'free' });
-      setStatus('signup_completed sent');
+      say('eventStatus', 'signup_completed sent as ' + user);
     });
 
-    // Flags load asynchronously, so wait for them instead of checking immediately
-   posthog.onFeatureFlags(function () {
-  var v = posthog.getFeatureFlag('signup-button-text-test');
-  if (v === 'test') document.getElementById('complete').textContent = 'Create my free account';
-  setStatus('Flag signup-button-text-test = ' + v);
-});
+    // PostHog does not allow re-identifying an already identified user as someone else,
+    // so start a clean visitor here instead of identifying again.
+    document.getElementById('reset').addEventListener('click', function () {
+      posthog.reset();
+      clearTestUser();
+      window.__flagBefore = undefined;
+      say('eventStatus', 'Reset: you are now a new anonymous visitor');
+    });
+
+    // Flags load asynchronously and reload after identify, so react in this callback
+    posthog.onFeatureFlags(function () {
+      var v = posthog.getFeatureFlag(FLAG);
+      // Boolean flag returns true/false; a multivariate flag returns 'control' or 'test'
+      var on = (v === true || v === 'test');
+      document.getElementById('complete').textContent = on ? 'Create my free account' : 'Complete signup';
+
+      var msg = 'Flag ' + FLAG + ' = ' + v;
+      if (window.__flagBefore !== undefined && window.__flagBefore !== v) {
+        msg += '  (CHANGED after identify: was ' + window.__flagBefore + ')';
+      }
+      say('flagStatus', msg);
+    });
   </script>
+
 </body>
 </html>
