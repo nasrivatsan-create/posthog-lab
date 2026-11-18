@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PostHog Lab</title>
+
+
+<script>
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="Th Mh Eh Ah Oh init dd vd rd ad md mc hd yd ed xd $d Cd Td Id Md capture getExtension fd mr ld ud calculateEventProperties Ad register register_once register_for_session unregister unregister_for_session Dd sd Pd getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync Ld identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset Nd shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty Od wd createPersonProfile setInternalOrTestUser Fd Nh Dh opt_in_capturing opt_out_capturing Lh has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing bd debug yc Ls getPageViewId captureTraceFeedback captureTraceMetric Zh".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('phc_nEwdy8QAwtzdwKzCsHk3hcPa4bzU3qhapRQ6oEowtCmA', {
+        api_host: 'https://us.i.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
+    })
+</script>
+</head>
+ 
+<!-- Note to self sri - you can do this ;) - Page will be at https://nasrivatsan-create.github.io/posthog-lab/identity.html -->
+<body style="font-family:sans-serif;max-width:560px;margin:32px auto;padding:0 16px;line-height:1.5">
+  <h1>Identity Lab</h1>
+  <p>Each button reproduces one identify mistake with fake test IDs. After each one, find the person in PostHog and check <b>Distinct IDs</b>. Click <b>Fresh visitor</b> between scenarios.</p>
+  <button id="fresh">Fresh visitor</button>
+  <p><b>Now:</b> <code id="now">…</code></p>
+
+  <h3>A. Correct flow</h3>
+  <p>Browse anonymously, identify with one stable ID, then convert. Expect one person with two IDs.</p>
+  <button id="a">Run A</button>
+
+  <h3>B. Converting before identify</h3>
+  <p>The conversion fires while still anonymous, and identify comes after. The conversion event keeps the anonymous ID.</p>
+  <button id="b">Run B</button>
+
+  <h3>C. Same user, two spellings</h3>
+  <p>Visitor 1 identifies as <code>Maya-1001</code>. Visitor 2 identifies as <code>maya-1001</code>. PostHog treats them as different people.</p>
+  <button id="c">Run C</button>
+
+  <h3>D. A banned ID</h3>
+  <p>Tries to identify as <code>guest</code>. PostHog refuses some IDs without an error. Check the browser console and whether the person got identified.</p>
+  <button id="d">Run D</button>
+
+  <h3>E. Identify twice with different IDs</h3>
+  <p>Identifies as one user, then tries another without resetting.</p>
+  <button id="e">Run E</button>
+
+  <h3>Log</h3>
+  <pre id="log" style="background:#f4f4f4;padding:10px;white-space:pre-wrap;min-height:80px"></pre>
+
+  <script>
+    var logEl = document.getElementById('log');
+    function now() { return posthog.get_distinct_id(); }
+    function show() { document.getElementById('now').textContent = now(); }
+    function log(msg) { logEl.textContent += msg + '\n'; show(); }
+    function rid() { return String(Math.floor(Math.random() * 90000) + 10000); }
+    function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+    document.getElementById('fresh').onclick = function () {
+      posthog.reset(); logEl.textContent = ''; log('Reset. New anonymous ID.');
+    };
+
+    document.getElementById('a').onclick = function () {
+      var u = 'lab-user-' + rid();
+      log('A: anonymous ID is ' + now());
+      posthog.capture('lab_browse', { scenario: 'A' });
+      posthog.identify(u, { plan: 'free' });
+      posthog.capture('lab_convert', { scenario: 'A' });
+      log('A: identified as ' + u + '. Now ' + now());
+    };
+
+    document.getElementById('b').onclick = function () {
+      var u = 'lab-user-' + rid();
+      log('B: anonymous ID is ' + now());
+      posthog.capture('lab_convert', { scenario: 'B', note: 'fired BEFORE identify' });
+      posthog.identify(u);
+      log('B: identified as ' + u + ' after converting. Look at the lab_convert event: which distinct ID does it carry?');
+    };
+
+    document.getElementById('c').onclick = async function () {
+      var n = rid();
+      log('C: visitor 1 identifies as Maya-' + n);
+      posthog.identify('Maya-' + n);
+      posthog.capture('lab_convert', { scenario: 'C', spelling: 'upper' });
+      posthog.reset();
+      await wait(300);
+      log('C: visitor 2 (same human, new device) identifies as maya-' + n);
+      posthog.identify('maya-' + n);
+      posthog.capture('lab_convert', { scenario: 'C', spelling: 'lower' });
+      log('C: done. Search People for "maya-' + n + '" and count the people.');
+    };
+
+    document.getElementById('d').onclick = function () {
+      log('D: before ' + now());
+      posthog.identify('guest');
+      posthog.capture('lab_convert', { scenario: 'D' });
+      log('D: after identify("guest") ' + now() + (now() === 'guest' ? '  (accepted)' : '  (NOT changed)'));
+    };
+
+    document.getElementById('e').onclick = function () {
+      var one = 'lab-user-' + rid(), two = 'lab-user-' + rid();
+      posthog.identify(one);
+      log('E: identified as ' + one);
+      posthog.identify(two);
+      posthog.capture('lab_convert', { scenario: 'E' });
+      log('E: then identify(' + two + '). Now ' + now() + '. Check both people and the $identify events.');
+    };
+
+    show();
+  </script>
+</body>
+
+  
+</html>
