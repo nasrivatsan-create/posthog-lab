@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PostHog Lab</title>
+<title>PostHog Identity Lab</title>
 
 
 <script>
@@ -16,7 +16,12 @@
 </script>
 </head>
  
-<!-- Note to self sri - you can do this ;) - Page will be at https://nasrivatsan-create.github.io/posthog-lab/identity.html -->
+
+ <!-- HOW TO USE
+1. In your posthog-lab repo, open index.html, copy ALL of it, and create a new file called identity.html with the same content.
+2. In identity.html, keep everything down to (and including) the closing </head> tag. Delete everything from the <body ...> line to the end.
+3. Paste this block in its place. Your real PostHog snippet and token stay in the head.
+4. Page will be at https://nasrivatsan-create.github.io/posthog-lab/identity.html -->
 <body style="font-family:sans-serif;max-width:560px;margin:32px auto;padding:0 16px;line-height:1.5">
   <h1>Identity Lab</h1>
   <p>Each button reproduces one identify mistake with fake test IDs. After each one, find the person in PostHog and check <b>Distinct IDs</b>. Click <b>Fresh visitor</b> between scenarios.</p>
@@ -106,7 +111,8 @@
 
     show();
   </script>
-</body>
 
-  
+</html>
+
+</body>
 </html>
