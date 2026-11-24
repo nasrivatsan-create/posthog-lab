@@ -24,6 +24,10 @@
   <button id="start">Start signup</button>
   <button id="complete">Complete signup</button>
   <button id="reset">New test visitor</button>
+      <button id="boom">Trigger test error (caught)</button>
+  <button id="boom2">Trigger test error (uncaught)</button>
+  <p id="errStatus"></p>
+    
   <p id="eventStatus">No events sent yet</p>
   <p id="flagStatus">Waiting for flags…</p>
 
@@ -65,6 +69,22 @@
       document.getElementById('complete').textContent =
         (v === 'test') ? 'Create my free account' : 'Complete signup';
       say('flagStatus', 'Flag ' + FLAG + ' = ' + v);
+    });
+
+          // Error Tracking exercise: deliberate bugs, test data only
+    document.getElementById('boom').addEventListener('click', function () {
+      try {
+        var order = null;
+        order.total.toFixed(2);              // deliberate bug: reading a property of null
+      } catch (e) {
+        posthog.captureException(e, { lab: 'error-tracking-exercise' });
+        document.getElementById('errStatus').textContent = 'Caught error reported: ' + e.message;
+      }
+    });
+
+    document.getElementById('boom2').addEventListener('click', function () {
+      document.getElementById('errStatus').textContent = 'Uncaught error thrown (check Error Tracking)';
+      setTimeout(function () { throw new Error('Lab uncaught error: checkout failed'); }, 0);
     });
   </script>
 </body>
